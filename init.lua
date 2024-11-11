@@ -1,6 +1,7 @@
 -- This file simply bootstraps the installation of Lazy.nvim and then calls other files for execution
 -- This file doesn't necessarily need to be touched, BE CAUTIOUS editing this file and proceed at your own risk.
 local lazypath = vim.env.LAZY or vim.fn.stdpath "data" .. "/lazy/lazy.nvim"
+vim.opt.termguicolors = true
 if not (vim.env.LAZY or (vim.uv or vim.loop).fs_stat(lazypath)) then
   -- stylua: ignore
   vim.fn.system({ "git", "clone", "--filter=blob:none", "https://github.com/folke/lazy.nvim.git", "--branch=stable", lazypath })
@@ -47,6 +48,32 @@ require("neo-tree").setup {
       visible = true, -- This is what you want: If you set this to `true`, all "hide" just mean "dimmed out"
       hide_dotfiles = false,
       hide_gitignored = true,
+    },
+    follow_current_file = {
+      enabled = false, -- This will find and focus the file in the active buffer every time
+      --               -- the current file is changed while the tree is open.
+      leave_dirs_open = false, -- `false` closes auto expanded dirs, such as with `:Neotree reveal`
+    },
+  },
+  git_status = {
+    window = {
+      position = "float",
+      mappings = {
+        ["A"] = "git_add_all",
+        ["gu"] = "git_unstage_file",
+        ["ga"] = "git_add_file",
+        ["gr"] = "git_revert_file",
+        ["gc"] = "git_commit",
+        ["gp"] = "git_push",
+        ["gg"] = "git_commit_and_push",
+        ["o"] = { "show_help", nowait = false, config = { title = "Order by", prefix_key = "o" } },
+        ["oc"] = { "order_by_created", nowait = false },
+        ["od"] = { "order_by_diagnostics", nowait = false },
+        ["om"] = { "order_by_modified", nowait = false },
+        ["on"] = { "order_by_name", nowait = false },
+        ["os"] = { "order_by_size", nowait = false },
+        ["ot"] = { "order_by_type", nowait = false },
+      },
     },
   },
 }
@@ -113,4 +140,11 @@ require("lualine").setup {
   winbar = {},
   inactive_winbar = {},
   extensions = {},
+}
+require("notify").setup {
+  background_colour = "#000000",
+  timeout = 1000,
+  fps = 60,
+  max_width = 50,
+  max_height = 5,
 }
