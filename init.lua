@@ -1,4 +1,3 @@
--- This file simply bootstraps the installation of Lazy.nvim and then calls other files for execution
 -- This file doesn't necessarily need to be touched, BE CAUTIOUS editing this file and proceed at your own risk.
 local lazypath = vim.env.LAZY or vim.fn.stdpath "data" .. "/lazy/lazy.nvim"
 vim.opt.termguicolors = true
@@ -23,6 +22,31 @@ local function searchFiles() vim.cmd "Rg" end
 
 vim.keymap.set("n", "<leader>fq", quickfix, opts)
 vim.keymap.set("n", "<leader>ff", searchFiles)
+
+vim.api.nvim_create_user_command("Whereami", function()
+  path = vim.api.nvim_buf_get_name(0)
+  vim.api.nvim_echo({ { ("%s\n"):format(path), "InfoMsg" } }, true, {})
+  vim.fn.setreg('"+', path)
+end, {})
+
+local function customMotion(motion)
+  local save_pos = vim.fn.getpos "."
+  vim.cmd("normal! " .. motion)
+  if vim.fn.line "." ~= save_pos[2] then vim.fn.setpos(".", save_pos) end
+end
+
+local function customMotion_w()
+  local save_pos = vim.fn.getpos "."
+  vim.cmd "normal! w"
+  if vim.fn.line "." ~= save_pos[2] then
+    vim.fn.setpos(".", save_pos)
+  else
+    vim.cmd "normal! aw"
+  end
+end
+
+vim.keymap.set("v", "w", function() customMotion "w" end , { noremap = true, silent = true })
+vim.keymap.set("v", "b", function() customMotion "b" end, { noremap = true, silent = true })
 
 vim.opt.scrolloff = 10
 vim.opt.wrap = false
