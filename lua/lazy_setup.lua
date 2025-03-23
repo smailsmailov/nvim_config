@@ -10,29 +10,29 @@ require("lazy").setup({
       pin_plugins = nil, -- Default will pin plugins when tracking `version` of AstroNvim, set to true/false to override
       update_notifications = true, -- Enable/disable notification about running `:Lazy update` twice to update pinned plugins
     },
-  },{ "typicode/bg.nvim", lazy = false },
+  },
+  { "typicode/bg.nvim", lazy = false },
   {
-  "folke/noice.nvim",
-  event = "VeryLazy",
-  opts = {
-    lsp ={
+    "folke/noice.nvim",
+    event = "VeryLazy",
+    opts = {
+      lsp = {
         signature = {
           enabled = false,
         },
       },
       -- add any options here
+    },
+    dependencies = {
+      -- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
+      "MunifTanjim/nui.nvim",
+      -- OPTIONAL:
+      --   `nvim-notify` is only needed, if you want to use the notification view.
+      --   If not available, we use `mini` as the fallback
+      "rcarriga/nvim-notify",
+    },
   },
-  dependencies = {
-    -- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
-    "MunifTanjim/nui.nvim",
-    -- OPTIONAL:
-    --   `nvim-notify` is only needed, if you want to use the notification view.
-    --   If not available, we use `mini` as the fallback
-    "rcarriga/nvim-notify",
-    }
-  }
-  ,
-  {'akinsho/toggleterm.nvim', version = "*", config = true},
+  { "akinsho/toggleterm.nvim", version = "*", config = true },
   { import = "community" },
   { import = "plugins" },
 } --[[@as LazySpec]], {
