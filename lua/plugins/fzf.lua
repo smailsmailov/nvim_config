@@ -1,5 +1,0 @@
-return {
-  {
-  "junegunn/fzf.vim" , 
-  }
-}

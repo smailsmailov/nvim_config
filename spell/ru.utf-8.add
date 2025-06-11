@@ -1,0 +1,11 @@
+init
+lua
+netrw
+nvim
+СИНТЕКССА
+ЛСП
+un
+keymap
+isAuthenticated
+endblock
+endif
