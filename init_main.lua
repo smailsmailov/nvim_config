@@ -65,60 +65,6 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 --------------------------------------------------------------------------------
--- SonarQube (connected mode)
---------------------------------------------------------------------------------
-local sonar_url = "http://172.29.1.158:9000"
-local sonar_connection_id = "local-sonarqube"
-local sonar_filetypes = {
-	"go",
-	"python",
-	"java",
-	"javascript",
-	"typescript",
-	"javascriptreact",
-	"typescriptreact",
-	"php",
-	"html",
-	"xml",
-}
-
--- Токен: сначала $SONAR_TOKEN, потом ~/.config/sonarlint/token (chmod 600).
-local function sonar_token()
-	if vim.env.SONAR_TOKEN and #vim.env.SONAR_TOKEN > 0 then
-		return vim.env.SONAR_TOKEN
-	end
-	local ok, lines = pcall(vim.fn.readfile, vim.fn.expand("~/.config/sonarlint/token"))
-	if ok and lines[1] then
-		return vim.trim(lines[1])
-	end
-	return nil
-end
-
--- Привязка проекта к projectKey: сначала явная таблица, потом sonar-project.properties.
-local sonar_project_keys = {
-	-- ["/home/danilromanovsky/projects/my-app"] = "my-app",
-}
-
-local function sonar_project_key(root)
-	if not root then
-		return nil
-	end
-	if sonar_project_keys[root] then
-		return sonar_project_keys[root]
-	end
-	local ok, lines = pcall(vim.fn.readfile, root .. "/sonar-project.properties")
-	if ok then
-		for _, line in ipairs(lines) do
-			local key = line:match("^%s*sonar%.projectKey%s*=%s*(.-)%s*$")
-			if key and #key > 0 then
-				return key
-			end
-		end
-	end
-	return nil
-end
-
---------------------------------------------------------------------------------
 -- Плагины
 --------------------------------------------------------------------------------
 require("lazy").setup({
@@ -349,72 +295,6 @@ require("lazy").setup({
 		opts = {},
 	},
 
-	-- ═══════════════════════  Sonarqube  ═══════════════════════
-	{
-		"https://gitlab.com/schrieveslaach/sonarlint.nvim",
-		ft = sonar_filetypes,
-		config = function()
-			local analyzers = vim.fn.expand("~/.local/share/sonarlint/sonarlint-extracted/extension/analyzers")
-			local cmd = { "sonarlint-language-server", "-stdio", "-analyzers" }
-			for _, jar in ipairs({
-				"sonargo.jar",
-				"sonarpython.jar",
-				"sonarjava.jar",
-				"sonarjavasymbolicexecution.jar",
-				"sonarjs.jar",
-				"sonarphp.jar",
-				"sonarhtml.jar",
-				"sonarxml.jar",
-				"sonartext.jar",
-			}) do
-				if vim.uv.fs_stat(analyzers .. "/" .. jar) then
-					table.insert(cmd, analyzers .. "/" .. jar)
-				end
-			end
-
-			require("sonarlint").setup({
-				connected = {
-					get_credentials = function()
-						return sonar_token()
-					end,
-				},
-				server = {
-					cmd = cmd,
-					settings = {
-						sonarlint = {
-							connectedMode = {
-								connections = {
-									sonarqube = {
-										{
-											connectionId = sonar_connection_id,
-											serverUrl = sonar_url,
-											disableNotifications = false,
-										},
-									},
-								},
-							},
-						},
-					},
-					before_init = function(params, config)
-						local root = params.rootPath
-						if not root and params.workspaceFolders and params.workspaceFolders[1] then
-							root = vim.uri_to_fname(params.workspaceFolders[1].uri)
-						end
-
-						local key = sonar_project_key(root)
-						if key then
-							config.settings.sonarlint.connectedMode.project = {
-								connectionId = sonar_connection_id,
-								projectKey = key,
-							}
-						end
-					end,
-				},
-				filetypes = sonar_filetypes,
-			})
-		end,
-	},
-
 	-- ═══════════════════════  Файловое дерево  ═══════════════════════
 	{
 		"nvim-neo-tree/neo-tree.nvim",
@@ -429,77 +309,6 @@ require("lazy").setup({
 			filesystem = {
 				filtered_items = { hide_gitignored = false },
 			},
-		},
-	},
-
-	-- ═══════════════════════  GOLANG  ═══════════════════════
-	{
-		"romus204/go-tagger.nvim",
-		config = function()
-			require("go-tagger").setup({
-				skip_private = true, -- Skip unexported fields (starting with lowercase)
-				casing = "camelCase", -- Global casing setting
-				tags = { -- Per tag setting override
-					json = {
-						casing = "camelCase", -- json tags should use camelCase
-					},
-					xml = {
-						casing = "snake_case", -- xml tags should use snake_case
-					},
-				},
-			})
-		end,
-	},
-	-- lazy.nvim
-	{
-		"sjclayton/goplexity.nvim",
-		ft = { "go" },
-	},
-	-- ═══════════════════════  AI  ═══════════════════════
-
-	{
-		"coder/claudecode.nvim",
-		dependencies = { "folke/snacks.nvim" },
-		opts = {
-			terminal = { provider = "none" },
-			git_repo_cwd = true,
-		},
-		config = true,
-		-- cmd нужен, чтобы :ClaudeCode работал сразу после старта,
-		-- а не только после нажатия одного из <leader>a-биндов
-		cmd = {
-			"ClaudeCode",
-			"ClaudeCodeFocus",
-			"ClaudeCodeSelectModel",
-			"ClaudeCodeAdd",
-			"ClaudeCodeSend",
-			"ClaudeCodeTreeAdd",
-			"ClaudeCodeStatus",
-			"ClaudeCodeStart",
-			"ClaudeCodeStop",
-			"ClaudeCodeOpen",
-			"ClaudeCodeClose",
-			"ClaudeCodeDiffAccept",
-			"ClaudeCodeDiffDeny",
-			"ClaudeCodeCloseAllDiffs",
-		},
-		keys = {
-			{ "<leader>a", nil, desc = "AI/Claude Code" },
-			{ "<leader>ac", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude" },
-			{ "<leader>af", "<cmd>ClaudeCodeFocus<cr>", desc = "Focus Claude" },
-			{ "<leader>ar", "<cmd>ClaudeCode --resume<cr>", desc = "Resume Claude" },
-			{ "<leader>aC", "<cmd>ClaudeCode --continue<cr>", desc = "Continue Claude" },
-			{ "<leader>am", "<cmd>ClaudeCodeSelectModel<cr>", desc = "Select model" },
-			{ "<leader>ab", "<cmd>ClaudeCodeAdd %<cr>", desc = "Add current buffer" },
-			{ "<leader>as", "<cmd>ClaudeCodeSend<cr>", mode = "v", desc = "Send to Claude" },
-			{
-				"<leader>as",
-				"<cmd>ClaudeCodeTreeAdd<cr>",
-				desc = "Add file",
-				ft = { "NvimTree", "neo-tree", "oil", "minifiles", "netrw", "snacks_picker_list" },
-			},
-			{ "<leader>aa", "<cmd>ClaudeCodeDiffAccept<cr>", desc = "Accept diff" },
-			{ "<leader>ad", "<cmd>ClaudeCodeDiffDeny<cr>", desc = "Deny diff" },
 		},
 	},
 
@@ -551,23 +360,7 @@ require("lazy").setup({
 		"folke/noice.nvim",
 		event = "VeryLazy",
 		opts = {
-			routes = {
-				-- Не показывать «служебные» сообщения SonarLint о запуске/подключении
-				{
-					filter = {
-						event = "notify",
-						find = "SonarQube language server is ready",
-					},
-					opts = { skip = true },
-				},
-				{
-					filter = {
-						event = "notify",
-						find = "^Connected to " .. vim.pesc(sonar_url),
-					},
-					opts = { skip = true },
-				},
-			},
+			-- add any options here
 		},
 		dependencies = {
 			-- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
