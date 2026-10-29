@@ -498,7 +498,8 @@ require("lazy").setup({
 				desc = "Add file",
 				ft = { "NvimTree", "neo-tree", "oil", "minifiles", "netrw", "snacks_picker_list" },
 			},
-			{ "<leader>aa", "<cmd>ClaudeCodeDiffAccept<cr>", desc = "Accept diff" },
+			-- <leader>aa занят под toggle окна ai_ask
+			{ "<leader>ay", "<cmd>ClaudeCodeDiffAccept<cr>", desc = "Accept diff" },
 			{ "<leader>ad", "<cmd>ClaudeCodeDiffDeny<cr>", desc = "Deny diff" },
 		},
 	},
@@ -754,6 +755,11 @@ require("lazy").setup({
 	install = { colorscheme = { "tokyonight" } },
 	checker = { enabled = false },
 })
+
+--------------------------------------------------------------------------------
+-- AI: выделение + вопрос → Claude Code / OpenCode (lua/ai_ask.lua)
+--------------------------------------------------------------------------------
+require("ai_ask").setup()
 
 --------------------------------------------------------------------------------
 -- Тема
